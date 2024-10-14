@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apple Receipt</title>
+    <title>Apple Receipt Generator</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -18,6 +18,7 @@
             border: 1px solid #ddd;
             padding: 20px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            display: none; /* Hidden until receipt is generated */
         }
         .receipt-header {
             text-align: center;
@@ -65,23 +66,50 @@
             color: #777;
             margin-top: 20px;
         }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        .form-container input, .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .form-container button {
+            background-color: #007aff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <div class="receipt-container">
+    <h1>Apple Receipt Generator</h1>
+    <div class="form-container">
+        <input type="text" id="customerName" placeholder="Customer Name" required>
+        <input type="email" id="customerEmail" placeholder="Customer Email" required>
+        <input type="text" id="orderNumber" placeholder="Order Number" required>
+        <input type="date" id="orderDate" required>
+        <input type="text" id="itemName" placeholder="Item Name" required>
+        <input type="number" id="itemQuantity" placeholder="Quantity" required>
+        <input type="number" id="itemPrice" placeholder="Price ($)" required step="0.01">
+        <button onclick="addItem()">Add Item</button>
+        <button onclick="generateReceipt()">Generate Receipt</button>
+    </div>
+
+    <div class="receipt-container" id="receipt">
         <div class="receipt-header">
             <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple Logo">
             <h2>Apple Store</h2>
         </div>
         
         <div class="receipt-details">
-            <div><strong>Order Number:</strong> 123456789</div>
-            <div><strong>Date:</strong> October 13, 2024</div>
-            <div><strong>Customer:</strong> John Doe</div>
-            <div><strong>Email:</strong> johndoe@example.com</div>
+            <div><strong>Order Number:</strong> <span id="displayOrderNumber"></span></div>
+            <div><strong>Date:</strong> <span id="displayOrderDate"></span></div>
+            <div><strong>Customer:</strong> <span id="displayCustomerName"></span></div>
+            <div><strong>Email:</strong> <span id="displayCustomerEmail"></span></div>
         </div>
 
-        <table class="items-table">
+        <table class="items-table" id="itemsTable">
             <thead>
                 <tr>
                     <th>Item</th>
@@ -89,29 +117,73 @@
                     <th>Price</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>Apple AirPods Pro</td>
-                    <td>1</td>
-                    <td>$249.00</td>
-                </tr>
-                <tr>
-                    <td>AppleCare+ for AirPods</td>
-                    <td>1</td>
-                    <td>$29.00</td>
-                </tr>
+            <tbody id="itemsBody">
+                <!-- Items will be added here -->
             </tbody>
         </table>
 
-        <div class="totals">
-            <div><strong>Subtotal:</strong> $278.00</div>
-            <div><strong>Tax:</strong> $20.85</div>
-            <div><strong>Total:</strong> $298.85</div>
+        <div class="totals" id="totals">
+            <div><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></div>
+            <div><strong>Tax (8%):</strong> $<span id="tax">0.00</span></div>
+            <div><strong>Total:</strong> $<span id="total">0.00</span></div>
         </div>
 
         <div class="footer-text">
             Thank you for shopping at Apple. If you have any questions, please visit <a href="https://www.apple.com/support">apple.com/support</a>.
         </div>
     </div>
+
+    <script>
+        let items = [];
+
+        function addItem() {
+            const name = document.getElementById('itemName').value;
+            const quantity = parseInt(document.getElementById('itemQuantity').value);
+            const price = parseFloat(document.getElementById('itemPrice').value);
+            
+            if (name && quantity && price) {
+                items.push({ name, quantity, price });
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemQuantity').value = '';
+                document.getElementById('itemPrice').value = '';
+                updateItemsTable();
+            }
+        }
+
+        function updateItemsTable() {
+            const itemsBody = document.getElementById('itemsBody');
+            itemsBody.innerHTML = '';
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${item.name}</td><td>${item.quantity}</td><td>$${(item.price).toFixed(2)}</td>`;
+                itemsBody.appendChild(row);
+            });
+            updateTotals();
+        }
+
+        function updateTotals() {
+            const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.08;
+            const total = subtotal + tax;
+
+            document.getElementById('subtotal').innerText = subtotal.toFixed(2);
+            document.getElementById('tax').innerText = tax.toFixed(2);
+            document.getElementById('total').innerText = total.toFixed(2);
+        }
+
+        function generateReceipt() {
+            const customerName = document.getElementById('customerName').value;
+            const customerEmail = document.getElementById('customerEmail').value;
+            const orderNumber = document.getElementById('orderNumber').value;
+            const orderDate = document.getElementById('orderDate').value;
+
+            document.getElementById('displayCustomerName').innerText = customerName;
+            document.getElementById('displayCustomerEmail').innerText = customerEmail;
+            document.getElementById('displayOrderNumber').innerText = orderNumber;
+            document.getElementById('displayOrderDate').innerText = new Date(orderDate).toLocaleDateString();
+
+            document.getElementById('receipt').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
